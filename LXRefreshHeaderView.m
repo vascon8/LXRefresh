@@ -138,4 +138,5 @@ NSString *const LXRefreshTimeKey = @"最近刷新时间";
 
     _timeLabel.text = [NSString stringWithFormat:@"最近更新:%@",timeStr];
 }
+
 @end

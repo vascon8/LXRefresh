@@ -156,10 +156,10 @@ NSString *const LXRefreshFooterViewMsgNormal = @"继续上拉刷新数据";
     }
     self.state = LXRefreshStatusTypeNormal;
 }
+
 #pragma mark - private
 - (void)dealloc
 {
     [self removeObserver:self forKeyPath:@"contentSize"];
-    [self removeObserver:self forKeyPath:@"contentOffset"];
 }
 @end

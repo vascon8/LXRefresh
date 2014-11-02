@@ -31,7 +31,7 @@ extern NSString *const LXRefreshMsgRelease;
 #define kLXRefreshRefreshingDur     0.3
 
 #define kLXRefreshViewMargin        8.0
-#define kLXRefreshViewTopBorder     8.0
+#define kLXRefreshViewTopBorder     16.0
 
 
 @protocol LXRefreshViewDelegate <NSObject>
