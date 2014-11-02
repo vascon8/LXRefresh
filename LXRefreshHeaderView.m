@@ -6,12 +6,12 @@
 #import "LXRefreshHeaderView.h"
 #import "NSDate+LX.h"
 
+
 NSString *const LXRefreshMsgNormal = @"继续下拉刷新数据";
+NSString *const LXRefreshTimeKey = @"最近刷新时间";
 
 @interface LXRefreshHeaderView ()
-{
-    NSDate  *_lastUpdateTime;
-}
+
 @end
 
 @implementation LXRefreshHeaderView
@@ -23,12 +23,9 @@ NSString *const LXRefreshMsgNormal = @"继续下拉刷新数据";
 - (id)initWithFrame:(CGRect)frame
 {
     if (self = [super initWithFrame:frame]) {
-        
-        self.backgroundColor = [UIColor redColor];
         self.type = LXRefreshViewTypeHeader;
         self.state = LXRefreshStatusTypeNormal;
         
-        _lastUpdateTime = [NSDate date];
         [self setupTimeLable];
     }
     return self;
@@ -110,28 +107,35 @@ NSString *const LXRefreshMsgNormal = @"继续下拉刷新数据";
 }
 - (void)updateTime:(NSDate *)date
 {
+    if (!date) return;
+    
     NSDateFormatter *fmt = [[NSDateFormatter alloc]init];
     fmt.dateFormat = @"HH:mm";
     NSString *timeStr = [NSString stringWithFormat:@"最近更新:%@",[fmt stringFromDate:date]];
     _timeLabel.text = timeStr;
     
-    _lastUpdateTime = date;
+    [[NSUserDefaults standardUserDefaults]setObject:date forKey:LXRefreshTimeKey];
+    [[NSUserDefaults standardUserDefaults]synchronize];
 }
 - (void)setupTimeLable
 {
+    NSDate *lastUpdateTime = [[NSUserDefaults standardUserDefaults]objectForKey:LXRefreshTimeKey];
+    if (!lastUpdateTime) lastUpdateTime = [NSDate dateWithTimeIntervalSince1970:1.0];
+    
     NSString *timeStr = Nil;
     NSDateFormatter *fmt = [[NSDateFormatter alloc]init];
     fmt.dateFormat = @"HH:mm";
-    if ([NSDate isToday:_lastUpdateTime]) {
-        timeStr = [NSString stringWithFormat:@"今天 %@",[fmt stringFromDate:_lastUpdateTime]];
+    if ([NSDate isToday:lastUpdateTime]) {
+        timeStr = [NSString stringWithFormat:@"今天 %@",[fmt stringFromDate:lastUpdateTime]];
     }
-    else if([NSDate isYesterday:_lastUpdateTime]){
-        timeStr = [NSString stringWithFormat:@"昨天 %@",[fmt stringFromDate:_lastUpdateTime]];
+    else if([NSDate isYesterday:lastUpdateTime]){
+        timeStr = [NSString stringWithFormat:@"昨天 %@",[fmt stringFromDate:lastUpdateTime]];
     }
     else{
         fmt.dateFormat = @"yyyy-MM-dd HH:mm";
-        timeStr = [NSString stringWithFormat:@"%@",[fmt stringFromDate:_lastUpdateTime]];
+        timeStr = [NSString stringWithFormat:@"%@",[fmt stringFromDate:lastUpdateTime]];
     }
+
     _timeLabel.text = [NSString stringWithFormat:@"最近更新:%@",timeStr];
 }
 @end

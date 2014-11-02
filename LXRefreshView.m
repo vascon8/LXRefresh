@@ -14,6 +14,7 @@ NSString *const LXRefreshMsgRelease = @"松开立即刷新";
 {
     BOOL            _initEd;
     CGFloat         _deltaHeight;
+    CGFloat         _visibleHeight;
 }
 @end
 
@@ -27,8 +28,6 @@ NSString *const LXRefreshMsgRelease = @"松开立即刷新";
         frame.origin.x = 0.0;
         self.frame = frame;
         self.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-        
-        _deltaHeight = self.bounds.size.height;
         
         [self createMsgBar];
         
@@ -56,8 +55,29 @@ NSString *const LXRefreshMsgRelease = @"松开立即刷新";
 {
     [super layoutSubviews];
     if (!_initEd) {
+        
+        if (self.type == LXRefreshViewTypeFooter) {
+            CGRect selfF = self.frame;
+            selfF.size.height = kLXRefreshFooterViewHeight;
+            self.frame = selfF;
+        }
+        
         _scrollViewInitOffsetHeight = -_scrollView.contentOffset.y;
         _scrollViewInitInset = _scrollView.contentInset;
+        _deltaHeight = self.bounds.size.height;
+        _visibleHeight = _scrollView.bounds.size.height - _scrollViewInitInset.top - _scrollViewInitInset.bottom;
+        
+        CGRect scrollFrame = _scrollView.frame;
+        
+        CGFloat headerY = - self.bounds.size.height;
+        CGFloat footerY = MAX(_scrollView.contentSize.height, _visibleHeight);
+        CGFloat Y = (self.type == LXRefreshViewTypeHeader) ? headerY : footerY;
+        CGRect frame = self.frame;
+        frame.origin.y = Y;
+        frame.size.width = scrollFrame.size.width;
+        self.frame = frame;
+        
+        [self adjustMsgBarPosition];
         
         if (_state == LXRefreshStatusTypeWillRefresh) {
             self.state = LXRefreshStatusTypeRefreshing;
@@ -73,18 +93,6 @@ NSString *const LXRefreshMsgRelease = @"松开立即刷新";
     _scrollView = scrollView;
     [_scrollView addSubview:self];
     
-    CGRect scrollFrame = _scrollView.frame;
-    
-    CGFloat headerY = - self.bounds.size.height;
-    CGFloat footerY = MAX(_scrollView.contentSize.height, _scrollView.bounds.size.height-_scrollViewInitInset.top-_scrollViewInitInset.bottom);
-    CGFloat Y = (self.type == LXRefreshViewTypeHeader) ? headerY : footerY;
-    CGRect frame = self.frame;
-    frame.origin.y = Y;
-    frame.size.width = scrollFrame.size.width;
-    self.frame = frame;
-    
-    [self adjustMsgBarPosition];
-    
     [_scrollView addObserver:self forKeyPath:@"contentOffset" options:NSKeyValueObservingOptionNew context:Nil];
 }
 #pragma mark observer state
@@ -92,7 +100,7 @@ NSString *const LXRefreshMsgRelease = @"松开立即刷新";
 {
     if (![keyPath isEqualToString:@"contentOffset"]) return;
    
-    CGFloat offsetHeight = _scrollView.contentOffset.y * self.type;
+    CGFloat offsetHeight = (_scrollView.contentOffset.y + _scrollViewInitOffsetHeight)*self.type;
 
     if (self.hidden || !self.userInteractionEnabled || !_initEd || !_indicator.hidden) return;
     
@@ -100,15 +108,16 @@ NSString *const LXRefreshMsgRelease = @"松开立即刷新";
         
         if (self.type == LXRefreshViewTypeFooter)
         {
-            _deltaHeight = _scrollView.contentSize.height + self.bounds.size.height;
-            offsetHeight += _scrollView.bounds.size.height;
+            _deltaHeight = _scrollView.contentSize.height+self.bounds.size.height;
             
-            if (_scrollView.contentSize.height == 0) {
-                _deltaHeight += (self.frame.origin.y);
+            offsetHeight += _visibleHeight;
+            
+            if (_scrollView.contentSize.height < _visibleHeight) {
+                _deltaHeight = (self.frame.origin.y+self.bounds.size.height);
             }
         }
         
-        if(offsetHeight >= _scrollViewInitOffsetHeight + _deltaHeight)
+        if(offsetHeight >= _deltaHeight)
         {
             self.state = LXRefreshStatusTypePull;
         }
@@ -134,7 +143,7 @@ NSString *const LXRefreshMsgRelease = @"松开立即刷新";
     self.timeLabel = timeLabel;
     [self addSubview:timeLabel];
     
-    UIImage *image = [UIImage imageNamed:@"arrow"];
+    UIImage *image = [UIImage imageNamed:@"LXRefresh.bundle/arrow"];
     UIImageView *arrowImageView = [[UIImageView alloc]init];
     _arrowImageView = arrowImageView;
     [_arrowImageView setImage:image];

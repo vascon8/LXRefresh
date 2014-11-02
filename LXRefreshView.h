@@ -26,6 +26,7 @@ extern NSString *const LXRefreshMsgRefreshing;
 extern NSString *const LXRefreshMsgRelease;
 
 #define kLXRefreshViewHeight        64.0
+#define kLXRefreshFooterViewHeight  49.0
 #define kLXRefreshBackToNormalDur   0.25
 #define kLXRefreshRefreshingDur     0.3
 

@@ -12,6 +12,8 @@ NSString *const LXRefreshFooterViewMsgNormal = @"继续上拉刷新数据";
 @interface LXRefreshFooterView ()
 {
     CGPoint _scrollViewOldOffset;
+    CGFloat _visibleHeight;
+    BOOL    _ineted;
 }
 @end
 
@@ -24,7 +26,6 @@ NSString *const LXRefreshFooterViewMsgNormal = @"继续上拉刷新数据";
 - (id)initWithFrame:(CGRect)frame
 {
     if (self = [super initWithFrame:frame]) {
-        self.backgroundColor = [UIColor redColor];
         self.type = LXRefreshViewTypeFooter;
         self.state = LXRefreshStatusTypeNormal;
         
@@ -32,25 +33,31 @@ NSString *const LXRefreshFooterViewMsgNormal = @"继续上拉刷新数据";
     }
     return self;
 }
-
+- (void)layoutSubviews
+{
+    [super layoutSubviews];
+    if (!_ineted) {
+        _ineted = YES;
+        
+        _scrollViewOldOffset = _scrollView.contentOffset;
+        _visibleHeight = _scrollView.bounds.size.height - _scrollViewInitInset.top - _scrollViewInitInset.bottom;
+        
+        CGSize selfSize = self.bounds.size;
+        CGSize size = self.statusLabel.bounds.size;
+        CGFloat X = (selfSize.width - size.width)/2.0;
+        CGFloat Y = (selfSize.height -size.height)/2.0;
+        self.statusLabel.frame = CGRectMake(X, Y, size.width, size.height);
+        
+        CGRect arrF = self.arrowImageView.frame;
+        arrF.origin.y = self.bounds.size.height / 2.0;
+        self.arrowImageView.center = CGPointMake(arrF.origin.x, self.bounds.size.height / 2.0);
+        self.indicator.frame = self.arrowImageView.frame;
+    }
+}
 #pragma mark - add observer
 - (void)setScrollView:(UIScrollView *)scrollView
 {
     [super setScrollView:scrollView];
-    _scrollViewOldOffset = _scrollView.contentOffset;
-    
-    CGSize selfSize = self.bounds.size;
-    CGSize size = self.statusLabel.bounds.size;
-    CGFloat X = (selfSize.width - size.width)/2.0;
-    CGFloat Y = (selfSize.height -size.height)/2.0;
-    self.statusLabel.frame = CGRectMake(X, Y, size.width, size.height);
-    
-    CGRect arrF = self.arrowImageView.frame;
-    arrF.origin.y = self.bounds.size.height / 2.0;
-    self.arrowImageView.center = CGPointMake(arrF.origin.x, self.bounds.size.height / 2.0);
-    self.indicator.frame = self.arrowImageView.frame;
-    
-    NSLog(@"%@ %@ %@",NSStringFromCGRect(self.frame),NSStringFromUIEdgeInsets(_scrollView.contentInset),NSStringFromCGPoint(_scrollView.contentOffset));
     
     [_scrollView addObserver:self forKeyPath:@"contentSize" options:NSKeyValueObservingOptionNew context:Nil];
 }
@@ -116,18 +123,21 @@ NSString *const LXRefreshFooterViewMsgNormal = @"继续上拉刷新数据";
     _indicator.hidden = NO;
     [_indicator startAnimating];
     
-    _scrollViewOldOffset = (_scrollView.contentSize.height == 0) ? CGPointMake(0.0, -_scrollViewInitOffsetHeight): CGPointMake(0.0, _scrollView.contentSize.height-_scrollView.bounds.size.height+_scrollView.contentInset.bottom);
+    _scrollViewOldOffset = (_scrollView.contentSize.height < _visibleHeight) ? CGPointMake(0.0, -_scrollViewInitOffsetHeight): CGPointMake(0.0, _scrollView.contentSize.height-_visibleHeight-_scrollViewInitOffsetHeight);
     
     UIEdgeInsets inset = _scrollView.contentInset;
+    inset = _scrollViewInitInset;
     inset.bottom += self.bounds.size.height;
     _scrollView.contentInset = inset;
     
-    _scrollView.contentOffset = CGPointMake(0.0, _scrollViewInitOffsetHeight+_scrollView.contentSize.height-_scrollView.bounds.size.height+self.bounds.size.height);
+    _scrollView.contentOffset = CGPointMake(0.0, _scrollView.contentInset.bottom+_scrollView.contentSize.height-_scrollView.bounds.size.height);
     
-    if (_scrollView.contentSize.height == 0.0) {
-        inset.bottom = _scrollView.bounds.size.height+self.bounds.size.height;
+    if (_scrollView.contentSize.height < _visibleHeight) {
+        inset.bottom = _scrollViewInitInset.bottom + _visibleHeight+self.bounds.size.height;
+        
         _scrollView.contentInset = inset;
-        _scrollView.contentOffset = CGPointMake(0.0, self.bounds.size.height+_scrollViewInitInset.bottom);
+        
+        _scrollView.contentOffset = CGPointMake(0.0, -_scrollViewInitInset.top+self.bounds.size.height);
     }
     
     dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(kLXRefreshRefreshingDur * NSEC_PER_SEC));
