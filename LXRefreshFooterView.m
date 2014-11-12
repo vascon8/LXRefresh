@@ -28,8 +28,6 @@ NSString *const LXRefreshFooterViewMsgNormal = @"继续上拉刷新数据";
     if (self = [super initWithFrame:frame]) {
         self.type = LXRefreshViewTypeFooter;
         self.state = LXRefreshStatusTypeNormal;
-        
-        [self.timeLabel removeFromSuperview];
     }
     return self;
 }
@@ -38,6 +36,9 @@ NSString *const LXRefreshFooterViewMsgNormal = @"继续上拉刷新数据";
     [super layoutSubviews];
     if (!_ineted) {
         _ineted = YES;
+        
+        
+        [self.timeLabel removeFromSuperview];
         
         _scrollViewOldOffset = _scrollView.contentOffset;
         _visibleHeight = _scrollView.bounds.size.height - _scrollViewInitInset.top - _scrollViewInitInset.bottom;
